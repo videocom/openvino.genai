@@ -1,3 +1,6 @@
+## **Changes made in https://github.com/videocom/openvino.genai/tree/releases/2026/0 to enable initial prompt and hotwords on NPU Static Pipeline. See background in https://github.com/openvinotoolkit/openvino.genai/issues/3533.**
+
+
 <div align="center">
 
 ![OpenVINO GenAI](/site/static/img/openvino-genai-logo-gradient.svg)
