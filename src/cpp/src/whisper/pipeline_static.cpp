@@ -13,6 +13,7 @@
 #include "whisper/whisper.hpp"
 #include "whisper/config.hpp"
 #include "whisper/whisper_utils.hpp"
+#include "whisper/context_tokens.hpp"
 
 #include "openvino/core/layout.hpp"
 #include "openvino/core/preprocess/pre_post_process.hpp"
@@ -1126,8 +1127,16 @@ WhisperDecodedResults WhisperPipeline::StaticWhisperPipeline::generate(
         config.set_eos_token_id(m_generation_config.eos_token_id);
     config.validate();
 
-    OPENVINO_ASSERT(!config.initial_prompt.has_value(), "'initial_prompt' parameter is not supported on NPU device.");
-    OPENVINO_ASSERT(!config.hotwords.has_value(), "'hotwords' parameter is not supported on NPU device.");
+    if (!config.word_timestamps) {
+        OPENVINO_ASSERT(!config.initial_prompt.has_value(),
+                        "'initial_prompt' parameter is not supported on NPU device without word_timestamps "
+                        "(decoder prompt length is too small).");
+        OPENVINO_ASSERT(!config.hotwords.has_value(),
+                        "'hotwords' parameter is not supported on NPU device without word_timestamps "
+                        "(decoder prompt length is too small).");
+    }
+
+    auto [context_tokens, tokenization_duration] = prepare_context_tokens(config, m_tokenizer);
 
     size_t max_new_tokens = config.get_max_new_tokens();
 
@@ -1180,8 +1189,9 @@ WhisperDecodedResults WhisperPipeline::StaticWhisperPipeline::generate(
             sot_tokens = prepare_sot_tokens(hidden_state_tensor, m_models.decoder, config, raw_metrics);
         }
 
-        std::vector<int64_t> chunk_sot_tokens = sot_tokens;
-        
+        std::vector<int64_t> chunk_sot_tokens = get_prompt_tokens(context_tokens, config, chunk_offset);
+        chunk_sot_tokens.insert(chunk_sot_tokens.end(), sot_tokens.begin(), sot_tokens.end());
+
         if (!return_timestamps) {
             chunk_sot_tokens.push_back(config.no_timestamps_token_id);
         }
@@ -1291,7 +1301,7 @@ WhisperDecodedResults WhisperPipeline::StaticWhisperPipeline::generate(
     metrics.load_time = this->m_load_time_ms;
     auto stop_time = std::chrono::steady_clock::now();
     metrics.raw_metrics.generate_durations.emplace_back(PerfMetrics::get_microsec(stop_time - start_time));
-    metrics.raw_metrics.tokenization_durations.emplace_back(MicroSeconds(0.0f));
+    metrics.raw_metrics.tokenization_durations.emplace_back(MicroSeconds(tokenization_duration));
     metrics.evaluate_statistics(start_time);
 
     return result;
