@@ -406,9 +406,6 @@ ov_genai_whisper_generation_config_get_suppress_tokens(const ov_genai_whisper_ge
                                                        int64_t* tokens,
                                                        size_t tokens_count);
 
-OPENVINO_GENAI_C_EXPORTS ov_status_e
-ov_genai_whisper_generation_config_set_num_beams(ov_genai_whisper_generation_config* config, size_t num_beams);
-
 /**
  * @brief Validate the whisper generation configuration.
  * @param config A pointer to the ov_genai_whisper_generation_config instance.
@@ -416,3 +413,6 @@ ov_genai_whisper_generation_config_set_num_beams(ov_genai_whisper_generation_con
  */
 OPENVINO_GENAI_C_EXPORTS ov_status_e
 ov_genai_whisper_generation_config_validate(ov_genai_whisper_generation_config* config);
+
+OPENVINO_GENAI_C_EXPORTS ov_status_e
+ov_genai_whisper_generation_config_set_num_beams(ov_genai_whisper_generation_config* config, size_t num_beams);
