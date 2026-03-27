@@ -575,6 +575,19 @@ ov_status_e ov_genai_whisper_generation_config_get_suppress_tokens(const ov_gena
     return ov_status_e::OK;
 }
 
+ov_status_e ov_genai_whisper_generation_config_set_num_beams(ov_genai_whisper_generation_config* config,
+                                                            size_t num_beams) {
+    if (!config || !(config->object)) {
+        return ov_status_e::INVALID_C_PARAM;
+    }
+    try {
+        config->object->num_beams = num_beams;
+    } catch (...) {
+        return ov_status_e::UNKNOW_EXCEPTION;
+    }
+    return ov_status_e::OK;
+}
+
 ov_status_e ov_genai_whisper_generation_config_validate(ov_genai_whisper_generation_config* config) {
     if (!config || !(config->object)) {
         return ov_status_e::INVALID_C_PARAM;
